@@ -1,12 +1,8 @@
 # dev-agent-kit
 
-Canonical source for Claude Code conventions shared across the ellison-projects repos:
+Canonical source for Claude Code conventions — rules, CLAUDE.md fragments, and starting-point templates — that you want to share across multiple repositories.
 
-- `ellison-projects/lawncare-platform`
-- `ellison-projects/declassified-records-app`
-- `ellison-projects/nexoprm`
-
-Consumer repos pull files from this kit via [`sync.sh`](./sync.sh) — run on-demand from an npm script. No manifest, no daemon, no precommit hook, no CI dependency.
+Consumer repos pull files from this kit via [`sync.sh`](./sync.sh), run on-demand from an npm script. The kit doesn't know or care who pulls from it: any repo with the npm script and network access can sync. No manifest, no daemon, no precommit hook, no CI dependency.
 
 ## Layout
 
@@ -84,8 +80,8 @@ For partials and templates, sync compares the *old* mirror against the *new* kit
 
 ## Editing the kit
 
-- **Rules** must remain truly universal across all three consumers. If a rule shouldn't apply to one of them, it doesn't belong in the kit — keep it in that consumer locally.
-- **Partials** are CLAUDE.md sections we want to keep in sync as a concept but allow each consumer to paste manually.
+- **Rules** must be universal across every consumer. If a rule shouldn't apply to one of them, it doesn't belong in the kit — keep it locally in that consumer.
+- **Partials** are CLAUDE.md sections you want to keep in sync as a concept but allow each consumer to paste manually.
 - **Templates** are starting points for files each consumer customizes (like `docs/CROSS_REPO_RULES.md`).
 
 After editing, tag a release if downstream pins use tags:
@@ -97,4 +93,4 @@ git push origin v1.1.0
 
 ## Status
 
-v1. See `dev-kit-plans/README.md` in `lawncare-platform` for the design history.
+v1.
