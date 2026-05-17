@@ -1,8 +1,18 @@
 # dev-agent-kit
 
-Canonical source for Claude Code conventions — rules, CLAUDE.md fragments, and starting-point templates — that you want to share across multiple repositories.
+The codified version of how I manage Claude Code conventions across multiple repos. Equal parts a shared library and a record of what I've learned about keeping multi-repo agent setups from drifting.
 
 Consumer repos pull files from this kit via [`sync.sh`](./sync.sh), run on-demand from an npm script. The kit doesn't know or care who pulls from it: any repo with the npm script and network access can sync. No manifest, no daemon, no precommit hook, no CI dependency.
+
+## Why this exists
+
+Three lessons baked into the structure:
+
+1. **Not all shared content has the same lifecycle.** Some files (`rules/`) should be byte-identical everywhere and updated centrally. Some (`partials/`) are conceptually shared but pasted into each repo's `CLAUDE.md` manually — agents read `CLAUDE.md` whole, so we can't auto-sync sections of it. Some (`templates/`) are starting points each repo owns once copied. Pretending they're all the same shape causes pain.
+2. **Convention beats configuration for small consumer counts.** No manifest, no opt-in/opt-out list. The kit is the manifest: if it's in `rules/`, every consumer gets it. Forces the discipline that only truly universal content lives here.
+3. **Mirror, don't trust hashes.** `.dev-agent-kit/` holds a pristine copy of what the kit last gave you. Drift detection is just `diff` against that mirror — readable, debuggable, no opaque lockfile. The same mirror powers "alert on upstream change" for partials and templates without overwriting your local copies.
+
+If you ever start a fourth repo, this is the answer to "how did I set this up before?"
 
 ## Layout
 
