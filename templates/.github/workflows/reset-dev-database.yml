@@ -13,15 +13,20 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
         run: |
+          set -euo pipefail
+
           NEON_BRANCH_NAME="preview/dev"
 
           echo "Looking for Neon branch: $NEON_BRANCH_NAME"
 
           # List all branches and find the dev branch
-          BRANCHES_RESPONSE=$(curl -s -X GET \
+          BRANCHES_RESPONSE=$(curl -sf -X GET \
             "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
             -H "Authorization: Bearer ${NEON_API_KEY}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json") || {
+            echo "::error::Failed to fetch Neon branches"
+            exit 1
+          }
 
           # Find branch ID by name
           BRANCH_ID=$(echo "$BRANCHES_RESPONSE" | jq -r --arg name "$NEON_BRANCH_NAME" '.branches[] | select(.name == $name) | .id')
@@ -66,10 +71,12 @@ jobs:
             exit 1
           fi
 
+          echo "PARENT_NAME=$PARENT_NAME" >> "$GITHUB_ENV"
+
       - name: Summary
         run: |
           echo "## Reset Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Reset Neon \`preview/dev\` branch to parent (main)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Reset Neon \`preview/dev\` branch to parent (\`${PARENT_NAME:-unknown}\`)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Dev database now matches production exactly." >> $GITHUB_STEP_SUMMARY
+          echo "Dev database now matches the parent branch exactly." >> $GITHUB_STEP_SUMMARY
