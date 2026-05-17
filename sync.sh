@@ -5,7 +5,6 @@
 #   npm run sync-agent-kit             # normal sync
 #   npm run sync-agent-kit -- --check  # report drift, exit 1 if anything would change
 #   npm run sync-agent-kit -- --force  # overwrite rule files that have local edits
-#   KIT_REF=v1.0.0 npm run sync-agent-kit  # pull a specific ref
 #
 # Convention (no manifest):
 #   kit/rules/<f>      → consumer's .claude/rules/<f>           (auto-applied)
@@ -15,7 +14,6 @@
 set -euo pipefail
 
 KIT_URL="${KIT_URL:-https://github.com/ellison-projects/dev-agent-kit.git}"
-KIT_REF="${KIT_REF:-main}"
 KIT_DIR=".dev-agent-kit"
 RULES_TARGET=".claude/rules"
 
@@ -26,7 +24,7 @@ for arg in "$@"; do
     --force) FORCE=1 ;;
     --check) CHECK=1 ;;
     -h|--help)
-      sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *) echo "unknown arg: $arg" >&2; exit 2 ;;
@@ -36,9 +34,8 @@ done
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
 
-echo "fetching dev-agent-kit @ $KIT_REF..."
-git clone --quiet "$KIT_URL" "$TMPDIR"
-git -C "$TMPDIR" checkout --quiet "$KIT_REF"
+echo "fetching dev-agent-kit..."
+git clone --quiet --depth=1 --branch main "$KIT_URL" "$TMPDIR"
 KIT_SHA="$(git -C "$TMPDIR" rev-parse --short HEAD)"
 
 CHANGES=0
@@ -155,18 +152,32 @@ SYNC_AT="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
 
 # --- Generate .dev-agent-kit/CLAUDE.md ---
 {
-  echo "# Dev Agent Kit (auto-managed)"
-  echo
-  echo "Pristine mirror of \`ellison-projects/dev-agent-kit\` at the last sync. Auto-managed by \`npm run sync-agent-kit\` — don't hand-edit anything in this folder."
-  echo
+  cat <<'STATIC_HEADER'
+# Dev Agent Kit (auto-managed)
+
+Pristine mirror of `ellison-projects/dev-agent-kit` at the last sync. Auto-managed by `npm run sync-agent-kit` — don't hand-edit anything in this folder. If you're reading this as an agent, this folder is the source of truth for what's kit-managed vs. locally owned in this repo.
+
+STATIC_HEADER
+
   echo "## Last sync"
   echo
   echo "- **When:** $SYNC_AT"
-  echo "- **Ref:** $KIT_REF"
   echo "- **SHA:** $KIT_SHA"
   echo
-  echo "## Synced files"
-  echo
+
+  cat <<'STATIC_BODY'
+## What's in here
+
+Three categories, each with its own sync behavior:
+
+- **`rules/`** — auto-applied to `.claude/rules/`. Byte-identical with the kit. The mirror here is what `sync.sh` diffs against to detect local edits.
+- **`partials/`** — CLAUDE.md sections the kit considers shared. Mirror only: agents read `CLAUDE.md` whole, so we can't safely auto-inject sections. Sync alerts when a partial moves upstream; you re-paste into the consumer's `CLAUDE.md` yourself.
+- **`templates/`** — starting points for files the consumer owns once copied (like `docs/CROSS_REPO_RULES.md`). Mirror only. Sync alerts but never overwrites your working copy.
+
+## Synced files
+
+STATIC_BODY
+
   echo "### \`rules/\` — auto-applied to \`$RULES_TARGET/\`"
   echo
   if [[ -d "$KIT_DIR/rules" ]] && [[ -n "$(find "$KIT_DIR/rules" -type f -print -quit)" ]]; then
@@ -200,12 +211,36 @@ SYNC_AT="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
     echo "_(none)_"
   fi
   echo
-  echo "## Commands"
-  echo
-  echo "- Refresh: \`npm run sync-agent-kit\`"
-  echo "- Check drift: \`npm run sync-agent-kit -- --check\`"
-  echo "- Force-overwrite local edits in rules: \`npm run sync-agent-kit -- --force\`"
-  echo "- Pin to a specific kit ref: \`KIT_REF=v1.0.0 npm run sync-agent-kit\`"
+
+  cat <<'STATIC_FOOTER'
+## How to detect drift
+
+**Rules:** working copy vs. mirror.
+
+```bash
+diff -r .dev-agent-kit/rules .claude/rules
+```
+
+If the diff is empty, no local edits. If not, you've drifted — `sync.sh` will abort those files until you `--force` or revert.
+
+**Partials & templates:** there's nothing to diff against your working copy (the kit doesn't know where you placed them). Instead, when sync alerts `⚑ partials/X updated upstream`, it means the kit moved relative to your last sync. To see what changed, look at the kit's git log for that path. To adopt, edit your local `CLAUDE.md` or template copy by hand.
+
+## When alerts fire
+
+- `⚑ partials/X (updated upstream)` — diff `.dev-agent-kit/partials/X` against the matching section in your `CLAUDE.md`, port the change if you want it, or ignore.
+- `⚑ templates/Y (updated upstream)` — same idea, against the working copy of Y.
+- Alerts are informational, not blocking. They appear once per upstream change — the mirror catches up after each sync.
+
+## Commands
+
+- `npm run sync-agent-kit` — pull latest kit content (rules auto-applied, partials/templates mirrored).
+- `npm run sync-agent-kit -- --check` — report drift, exit 1 if anything would change, don't modify files.
+- `npm run sync-agent-kit -- --force` — overwrite rule files that have local edits (use carefully — wipes your local changes).
+
+## Editing kit content
+
+This folder is read-only. To change anything here, edit it upstream at `ellison-projects/dev-agent-kit` and re-run sync.
+STATIC_FOOTER
 } > "$KIT_DIR/CLAUDE.md"
 
 # --- Upsert managed block in $RULES_TARGET/CLAUDE.md listing kit-managed rules ---
@@ -226,7 +261,7 @@ if (( ${#RULE_FILES[@]} > 0 )); then
       echo "- \`$rel\` ← kit path \`rules/$rel\`"
     done
     echo
-    echo "Last sync: $SYNC_AT (kit @ $KIT_REF, sha $KIT_SHA)"
+    echo "Last sync: $SYNC_AT (kit sha $KIT_SHA)"
     echo
     echo "$end_marker"
   } > "$block_file"
@@ -260,5 +295,5 @@ if (( ${#RULE_FILES[@]} > 0 )); then
 fi
 
 echo
-echo "synced $CHANGES file(s), $ALERTS alert(s), $ERRORS error(s) (kit @ $KIT_REF, sha $KIT_SHA)"
+echo "synced $CHANGES file(s), $ALERTS alert(s), $ERRORS error(s) (kit sha $KIT_SHA)"
 exit $(( ERRORS > 0 ? 1 : 0 ))

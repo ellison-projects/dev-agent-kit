@@ -65,7 +65,6 @@ your-repo/
 npm run sync-agent-kit              # normal sync
 npm run sync-agent-kit -- --check   # report drift, exit 1 if anything would change
 npm run sync-agent-kit -- --force   # overwrite rule files that have local edits
-KIT_REF=v1.0.0 npm run sync-agent-kit   # pin to a specific kit ref
 ```
 
 ## How drift detection works
@@ -80,26 +79,13 @@ diff -r .dev-agent-kit/rules .claude/rules
 
 For partials and templates, sync compares the *old* mirror against the *new* kit content before overwriting the mirror. If they differ, it prints an alert so you know to review and re-apply (paste into CLAUDE.md, re-copy the template, etc.). The mirror always reflects the latest synced kit version after a run, so you see exactly one alert per upstream change.
 
-## Pinning
-
-`KIT_REF` accepts a branch, tag, or commit SHA. Default is `main`.
-
-- `KIT_REF=main` — track latest (default).
-- `KIT_REF=v1.0.0` — pin to a tag. Recommended for shared environments; bump deliberately.
-- `KIT_REF=<sha>` — pin to a commit.
-
 ## Editing the kit
 
 - **Rules** must be universal across every consumer. If a rule shouldn't apply to one of them, it doesn't belong in the kit — keep it locally in that consumer.
 - **Partials** are CLAUDE.md sections you want to keep in sync as a concept but allow each consumer to paste manually.
 - **Templates** are starting points for files each consumer customizes (like `docs/CROSS_REPO_RULES.md`).
 
-After editing, tag a release if downstream pins use tags:
-
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
+Edit upstream and push — consumers pick up the change on their next sync.
 
 ## Status
 
