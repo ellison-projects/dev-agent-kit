@@ -1,3 +1,9 @@
+---
+globs:
+  - "tests/e2e/**"
+  - "vitest.e2e.config.ts"
+---
+
 # E2E Gotchas (Puppeteer)
 
 How to write Vitest + Puppeteer specs that don't go flaky. Every rule here exists because we paid for it once already.

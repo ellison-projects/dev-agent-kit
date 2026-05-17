@@ -1,3 +1,8 @@
+---
+globs:
+  - "**/*.test.{ts,tsx}"
+---
+
 # Test Files Rules
 
 Conventions for writing unit and integration tests so they stay easy to scan, maintain, and run.
