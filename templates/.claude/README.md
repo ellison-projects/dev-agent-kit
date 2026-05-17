@@ -1,21 +1,43 @@
-# `.claude/` template
+# .claude bundle
 
-Starter `.claude/` directory for a new consumer repo. Copy this whole folder to the repo root, then customize.
+Starting-point Claude Code config for a new repo. Mirror-only — copy this folder to `.claude/` in the consumer once and own it.
 
-## Contents
+## What's in here
 
-- **`settings.json`** — Claude Code project settings. Ships with a single `SessionStart` hook that runs `scripts/setup.sh` if it exists. Safe to copy as-is; the `test -f` guard means it no-ops in repos that don't have a setup script yet.
+```
+.claude/
+├── settings.json   # SessionStart hook loader, no-ops if scripts/setup.sh doesn't exist
+└── skills/
+    ├── review-copilot-pr-comments/SKILL.md  # walk PR comments, fix/reply/subscribe
+    └── vercel-deployment/SKILL.md           # check latest deploy, fix on failure
+```
 
-- **`skills/`** — opt-in skills the dev-agent-kit considers worth defaulting:
-  - `review-copilot-pr-comments/` — triages PR review comments, auto-fixes obvious ones, replies to every comment, subscribes the session to ongoing PR activity.
-  - `vercel-deployment/` — checks the latest Vercel deploy; on failure, fetches build logs, diagnoses, and applies a minimal fix.
+## settings.json
 
-## Extending
+Ships with one hook: `SessionStart` runs `scripts/setup.sh` if it exists. The `test -f … || true` wrapper means the hook is a no-op for repos that haven't created the setup script yet — safe to copy and forget. Use the script to load `.env.build`-style stub vars for agent sessions or to install missing CLIs.
 
-Add more hooks to `settings.json` as the repo's conventions solidify. Common patterns from sibling repos:
+Add your own hooks as needed. Common patterns:
 
-- **Migration smoke test** — `PostToolUse` hook that re-runs an integration test whenever `migrations/*` is edited.
-- **Lint-on-save gate** — `PostToolUse` hook that runs `npm run lint` on the edited file.
-- **Env-loading SessionStart** — replace the placeholder hook with a project-specific `scripts/setup.sh` that loads `.env.build` for agent sessions (see Lawncare's `.env.build` + `scripts/setup.sh` pattern for a concrete example).
+- **PostToolUse on migrations** — run schema smoke tests when a migration file is edited:
+  ```jsonc
+  {
+    "matcher": "Edit|Write|MultiEdit",
+    "hooks": [{
+      "type": "command",
+      "command": "case \"$CLAUDE_TOOL_INPUT_file_path\" in *migrations/*) npx vitest run tests/integration/db-smoke.test.ts ;; esac"
+    }]
+  }
+  ```
+- **Stop** — desktop notification or sound when a long-running session finishes.
+- **PreToolUse** — gate destructive shell commands with a confirmation prompt.
 
-Skills can be edited freely — they're owned by the consumer once copied. To add a new one, drop a directory with a `SKILL.md` under `.claude/skills/<name>/` and Claude Code will pick it up.
+See https://code.claude.com/docs/en/claude-code/settings for the full hook reference.
+
+## skills/
+
+Both skills are genericized from the lawncare-platform conventions:
+
+- **`review-copilot-pr-comments`** — invoked when you ask Claude to "review PR comments" or "watch this PR". Triages each review comment into fix / defer / push-back, replies to all, then subscribes the session so future events keep waking it. Requires GitHub MCP access.
+- **`vercel-deployment`** — checks the latest Vercel deploy via the Vercel MCP, summarizes the state, and if it failed, pulls logs and applies a minimal fix. Resolves the project from `.vercel/project.json` or `$ARGUMENTS`; hardcode IDs in the skill body if your fresh-session environment doesn't have `.vercel/` committed.
+
+Skills auto-trigger on matching user phrasing — the `description` frontmatter is what does the matching, so don't edit it lightly.
