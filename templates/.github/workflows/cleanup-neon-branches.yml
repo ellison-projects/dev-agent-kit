@@ -1,0 +1,178 @@
+name: Cleanup Neon Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (show what would be deleted without deleting)"
+        required: false
+        default: "true"
+        type: boolean
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete unprotected Neon branches
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          echo "Dry run: $DRY_RUN"
+          echo ""
+
+          # Fetch all Neon branches
+          BRANCHES_RESPONSE=$(curl -sf -X GET \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json")
+
+          if [ -z "$BRANCHES_RESPONSE" ]; then
+            echo "::error::Failed to fetch Neon branches"
+            exit 1
+          fi
+
+          TOTAL=$(echo "$BRANCHES_RESPONSE" | jq '.branches | length')
+          echo "Found $TOTAL total Neon branches"
+          echo ""
+
+          # Filter to deletable branches (not main, not preview/dev, not default, not primary)
+          DELETABLE=$(echo "$BRANCHES_RESPONSE" | jq -c '
+            [.branches[] | select(
+              .name != "main" and
+              .name != "preview/dev" and
+              .default != true and
+              .primary != true
+            )]
+          ')
+
+          DELETABLE_COUNT=$(echo "$DELETABLE" | jq 'length')
+
+          if [ "$DELETABLE_COUNT" -eq 0 ]; then
+            echo "No branches to clean up."
+            echo "CLEANUP_STATUS=empty" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Protected (will keep):"
+          echo "$BRANCHES_RESPONSE" | jq -r '
+            .branches[] | select(
+              .name == "main" or
+              .name == "preview/dev" or
+              .default == true or
+              .primary == true
+            ) | "  ✓ \(.name)"
+          '
+          echo ""
+
+          echo "Branches to delete ($DELETABLE_COUNT):"
+          echo "$DELETABLE" | jq -r '.[] | "  ✗ \(.name) (created \(.created_at | split("T")[0]))"'
+          echo ""
+
+          DELETED_COUNT=0
+          ERROR_COUNT=0
+          DELETED_NAMES=""
+          ERROR_NAMES=""
+
+          for row in $(echo "$DELETABLE" | jq -r '.[] | @base64'); do
+            BRANCH_ID=$(echo "$row" | base64 -d | jq -r '.id')
+            BRANCH_NAME=$(echo "$row" | base64 -d | jq -r '.name')
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔍 Would delete: $BRANCH_NAME ($BRANCH_ID)"
+              DELETED_COUNT=$((DELETED_COUNT + 1))
+              DELETED_NAMES="${DELETED_NAMES}${BRANCH_NAME}\n"
+            else
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+                "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches/${BRANCH_ID}" \
+                -H "Authorization: Bearer ${NEON_API_KEY}" \
+                -H "Content-Type: application/json")
+
+              if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+                echo "🗑️  Deleted: $BRANCH_NAME"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+                DELETED_NAMES="${DELETED_NAMES}${BRANCH_NAME}\n"
+              else
+                echo "❌ Failed to delete: $BRANCH_NAME (HTTP $HTTP_CODE)"
+                ERROR_COUNT=$((ERROR_COUNT + 1))
+                ERROR_NAMES="${ERROR_NAMES}${BRANCH_NAME}\n"
+              fi
+
+              # Small delay to avoid rate limiting
+              sleep 0.2
+            fi
+          done
+
+          echo ""
+          echo "Summary:"
+          echo "  Deleted: $DELETED_COUNT"
+          echo "  Errors:  $ERROR_COUNT"
+
+          if [ "$DRY_RUN" = "true" ] && [ "$DELETED_COUNT" -gt 0 ]; then
+            echo ""
+            echo "This was a dry run. Run again with dry_run=false to actually delete branches."
+          fi
+
+          echo "CLEANUP_STATUS=success" >> "$GITHUB_ENV"
+          echo "DELETED_COUNT=$DELETED_COUNT" >> "$GITHUB_ENV"
+          echo "ERROR_COUNT=$ERROR_COUNT" >> "$GITHUB_ENV"
+          {
+            echo "DELETED_NAMES<<NAMES_EOF"
+            echo -e "$DELETED_NAMES"
+            echo "NAMES_EOF"
+          } >> "$GITHUB_ENV"
+          {
+            echo "ERROR_NAMES<<ERRORS_EOF"
+            echo -e "$ERROR_NAMES"
+            echo "ERRORS_EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Summary
+        if: always()
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          echo "## Neon Branch Cleanup" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${CLEANUP_STATUS:-}" = "empty" ]; then
+            echo "✅ No branches to clean up. Only protected branches remain." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${CLEANUP_STATUS:-}" = "success" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔍 **Dry Run Complete**" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "✅ **Cleanup Complete**" >> "$GITHUB_STEP_SUMMARY"
+            fi
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Result | Count |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Deleted | ${DELETED_COUNT:-0} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Errors | ${ERROR_COUNT:-0} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+
+            if [ -n "${DELETED_NAMES:-}" ]; then
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "### Would delete:" >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "### Deleted:" >> "$GITHUB_STEP_SUMMARY"
+              fi
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo -e "$DELETED_NAMES" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+
+            if [ -n "${ERROR_NAMES:-}" ]; then
+              echo "### Failed:" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo -e "$ERROR_NAMES" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "❌ **Failed** - check logs for details" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Protected branches (never deleted): \`main\`, \`preview/dev\`, default, primary" >> "$GITHUB_STEP_SUMMARY"

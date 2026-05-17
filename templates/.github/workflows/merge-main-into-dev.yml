@@ -1,0 +1,59 @@
+name: Merge main into dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  merge-main-into-dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into dev
+        run: |
+          git fetch origin main dev
+
+          # Check if dev branch exists
+          if ! git show-ref --verify --quiet refs/remotes/origin/dev; then
+            echo "::error::Branch 'dev' does not exist"
+            exit 1
+          fi
+
+          git checkout dev
+
+          # Check if there are any changes to merge
+          if git merge-base --is-ancestor origin/main dev; then
+            echo "✓ dev is already up to date with main"
+            echo "MERGE_STATUS=up-to-date" >> $GITHUB_ENV
+          else
+            echo "Merging main into dev..."
+            git merge origin/main --no-edit
+            git push origin dev
+            echo "✓ Successfully merged main into dev"
+            echo "MERGE_STATUS=merged" >> $GITHUB_ENV
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Merge Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$MERGE_STATUS" = "merged" ]; then
+            echo "✅ Successfully merged \`main\` into \`dev\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ \`dev\` is already up to date with \`main\`" >> $GITHUB_STEP_SUMMARY
+          fi
