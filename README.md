@@ -23,7 +23,7 @@ In each consumer repo, add an npm script to `package.json`:
 ```json
 {
   "scripts": {
-    "sync-agent-kit": "curl -sSL https://raw.githubusercontent.com/ellison-projects/dev-agent-kit/main/sync.sh | bash"
+    "sync-agent-kit": "curl -fsSL https://raw.githubusercontent.com/ellison-projects/dev-agent-kit/main/sync.sh | bash -s --"
   }
 }
 ```
