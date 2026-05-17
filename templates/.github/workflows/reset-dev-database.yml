@@ -1,0 +1,82 @@
+name: "Dev DB Refresh - Reset to prod"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset-dev-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reset Neon dev branch to parent
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          NEON_BRANCH_NAME="preview/dev"
+
+          echo "Looking for Neon branch: $NEON_BRANCH_NAME"
+
+          # List all branches and find the dev branch
+          BRANCHES_RESPONSE=$(curl -sf -X GET \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json") || {
+            echo "::error::Failed to fetch Neon branches"
+            exit 1
+          }
+
+          # Find branch ID by name
+          BRANCH_ID=$(echo "$BRANCHES_RESPONSE" | jq -r --arg name "$NEON_BRANCH_NAME" '.branches[] | select(.name == $name) | .id')
+
+          if [ -z "$BRANCH_ID" ] || [ "$BRANCH_ID" = "null" ]; then
+            echo "::error::Could not find Neon branch '$NEON_BRANCH_NAME'"
+            echo "Available branches:"
+            echo "$BRANCHES_RESPONSE" | jq -r '.branches[].name'
+            exit 1
+          fi
+
+          echo "Found branch ID: $BRANCH_ID"
+
+          # Get parent branch ID
+          PARENT_ID=$(echo "$BRANCHES_RESPONSE" | jq -r --arg id "$BRANCH_ID" '.branches[] | select(.id == $id) | .parent_id')
+
+          if [ -z "$PARENT_ID" ] || [ "$PARENT_ID" = "null" ]; then
+            echo "::error::Branch '$NEON_BRANCH_NAME' has no parent branch to reset to"
+            exit 1
+          fi
+
+          PARENT_NAME=$(echo "$BRANCHES_RESPONSE" | jq -r --arg id "$PARENT_ID" '.branches[] | select(.id == $id) | .name')
+          echo "Parent branch: $PARENT_NAME ($PARENT_ID)"
+
+          # Reset the branch to its parent
+          echo "Resetting '$NEON_BRANCH_NAME' to parent '$PARENT_NAME'..."
+
+          RESET_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches/${BRANCH_ID}/reset" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"source_branch_id\": \"${PARENT_ID}\"}")
+
+          HTTP_CODE=$(echo "$RESET_RESPONSE" | tail -n 1)
+          RESPONSE_BODY=$(echo "$RESET_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✓ Successfully reset Neon branch '$NEON_BRANCH_NAME' to parent"
+          else
+            echo "::error::Failed to reset Neon branch. HTTP $HTTP_CODE"
+            echo "$RESPONSE_BODY"
+            exit 1
+          fi
+
+          echo "PARENT_NAME=$PARENT_NAME" >> "$GITHUB_ENV"
+
+      - name: Summary
+        run: |
+          echo "## Reset Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Reset Neon \`preview/dev\` branch to parent (\`${PARENT_NAME:-unknown}\`)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Dev database now matches the parent branch exactly." >> $GITHUB_STEP_SUMMARY

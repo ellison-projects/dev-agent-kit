@@ -1,0 +1,141 @@
+name: Cleanup Claude Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (show what would be deleted without deleting)"
+        required: false
+        default: "true"
+        type: boolean
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Delete merged claude/ branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          echo "Dry run: $DRY_RUN"
+          echo ""
+
+          # Check for any open PRs
+          OPEN_PR_COUNT=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --json number \
+            -q 'length')
+
+          if [ "$OPEN_PR_COUNT" -gt 0 ]; then
+            echo "❌ Found $OPEN_PR_COUNT open PR(s). Skipping cleanup."
+            echo ""
+            gh pr list --repo "${{ github.repository }}" --state open
+            echo ""
+            echo "Close or merge all PRs before running cleanup."
+            echo "CLEANUP_STATUS=blocked" >> $GITHUB_ENV
+            echo "OPEN_PR_COUNT=$OPEN_PR_COUNT" >> $GITHUB_ENV
+            exit 1
+          fi
+
+          echo "✅ No open PRs. Proceeding..."
+          echo ""
+
+          # Get all branches starting with claude/
+          BRANCHES=$(gh api repos/${{ github.repository }}/branches --paginate -q '.[].name | select(startswith("claude/"))')
+
+          if [ -z "$BRANCHES" ]; then
+            echo "No claude/ branches found."
+            echo "CLEANUP_STATUS=empty" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          echo "Found claude/ branches:"
+          echo "$BRANCHES"
+          echo ""
+
+          DELETED_COUNT=0
+          SKIPPED_COUNT=0
+          ERROR_COUNT=0
+
+          while IFS= read -r BRANCH; do
+            [ -z "$BRANCH" ] && continue
+
+            # Check if there's a merged PR from this branch
+            MERGED_PR=$(gh pr list \
+              --repo "${{ github.repository }}" \
+              --head "$BRANCH" \
+              --state merged \
+              --json number \
+              --limit 1 \
+              -q '.[0].number // empty')
+
+            if [ -n "$MERGED_PR" ]; then
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "🔍 Would delete: $BRANCH (PR #$MERGED_PR was merged)"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+              else
+                echo "🗑️  Deleting: $BRANCH (PR #$MERGED_PR was merged)"
+                if gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH" 2>/dev/null; then
+                  DELETED_COUNT=$((DELETED_COUNT + 1))
+                else
+                  echo "   ❌ Failed to delete $BRANCH"
+                  ERROR_COUNT=$((ERROR_COUNT + 1))
+                fi
+              fi
+            else
+              echo "⏭️  Skipping: $BRANCH (no merged PR found)"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            fi
+          done <<< "$BRANCHES"
+
+          echo ""
+          echo "Summary:"
+          echo "  Deleted: $DELETED_COUNT"
+          echo "  Skipped: $SKIPPED_COUNT"
+          echo "  Errors:  $ERROR_COUNT"
+
+          if [ "$DRY_RUN" = "true" ] && [ $DELETED_COUNT -gt 0 ]; then
+            echo ""
+            echo "This was a dry run. Run again with dry_run=false to actually delete branches."
+          fi
+
+          # Export for summary step
+          echo "CLEANUP_STATUS=success" >> $GITHUB_ENV
+          echo "DELETED_COUNT=$DELETED_COUNT" >> $GITHUB_ENV
+          echo "SKIPPED_COUNT=$SKIPPED_COUNT" >> $GITHUB_ENV
+          echo "ERROR_COUNT=$ERROR_COUNT" >> $GITHUB_ENV
+
+      - name: Summary
+        if: always()
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          echo "## Claude Branch Cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$CLEANUP_STATUS" = "blocked" ]; then
+            echo "❌ **Blocked**: $OPEN_PR_COUNT open PR(s) found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Close or merge all PRs before running cleanup." >> $GITHUB_STEP_SUMMARY
+          elif [ "$CLEANUP_STATUS" = "empty" ]; then
+            echo "✅ No claude/ branches found. Nothing to clean up." >> $GITHUB_STEP_SUMMARY
+          elif [ "$CLEANUP_STATUS" = "success" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔍 **Dry Run Complete**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **Cleanup Complete**" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Result | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Deleted | $DELETED_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | $SKIPPED_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Errors | $ERROR_COUNT |" >> $GITHUB_STEP_SUMMARY
+          fi

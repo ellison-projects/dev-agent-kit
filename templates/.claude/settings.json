@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f \"$CLAUDE_PROJECT_DIR/scripts/setup.sh\" && bash \"$CLAUDE_PROJECT_DIR/scripts/setup.sh\" || true"
+          }
+        ]
+      }
+    ]
+  }
+}

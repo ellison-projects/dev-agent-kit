@@ -1,0 +1,85 @@
+name: Delete Neon Branch
+
+on:
+  delete: # Fires when a branch or tag is deleted
+  pull_request:
+    types: [closed] # Fires when a PR is merged or closed
+
+jobs:
+  cleanup:
+    # Run for branch deletions (not tags) or PR close events
+    if: github.event_name == 'pull_request' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete matching Neon branch
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          DELETED_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.event.ref }}
+        run: |
+          set -euo pipefail
+
+          # Neon branches are prefixed with "preview/"
+          NEON_BRANCH="preview/${DELETED_BRANCH}"
+
+          echo "Trigger: ${{ github.event_name }} (ref: $DELETED_BRANCH)"
+          echo "Looking for Neon branch: $NEON_BRANCH"
+          echo ""
+
+          # Never delete the protected dev preview branch. The Neon `main`
+          # branch is guarded below by the default/primary jq filter.
+          if [ "$NEON_BRANCH" = "preview/dev" ]; then
+            echo "⏭️  '$NEON_BRANCH' is protected. Skipping."
+            exit 0
+          fi
+
+          # Fetch all Neon branches
+          BRANCHES_RESPONSE=$(curl -sf -X GET \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json")
+
+          if [ -z "$BRANCHES_RESPONSE" ]; then
+            echo "::error::Failed to fetch Neon branches"
+            exit 1
+          fi
+
+          # Find matching Neon branch by preview/* name (skip default/primary)
+          MATCH=$(echo "$BRANCHES_RESPONSE" | jq -r --arg name "$NEON_BRANCH" '
+            .branches[] | select(
+              .name == $name and
+              .default != true and
+              .primary != true
+            ) | .id
+          ')
+
+          if [ -z "$MATCH" ]; then
+            echo "No matching Neon branch found for '$NEON_BRANCH'. Nothing to do."
+            exit 0
+          fi
+
+          echo "Found matching Neon branch ID: $MATCH"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches/${MATCH}" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json")
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "🗑️  Deleted Neon branch '$NEON_BRANCH'"
+          else
+            echo "::error::Failed to delete Neon branch '$NEON_BRANCH' (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        env:
+          DELETED_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.event.ref }}
+        run: |
+          echo "## Neon Branch Auto-Cleanup" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Trigger: \`${{ github.event_name }}\` (ref: \`$DELETED_BRANCH\`)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Attempted to delete matching Neon branch. Check logs for details." >> "$GITHUB_STEP_SUMMARY"
