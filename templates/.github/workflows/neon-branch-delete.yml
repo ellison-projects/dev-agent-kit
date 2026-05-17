@@ -23,12 +23,13 @@ jobs:
           # Neon branches are prefixed with "preview/"
           NEON_BRANCH="preview/${DELETED_BRANCH}"
 
-          echo "Git branch deleted: $DELETED_BRANCH"
+          echo "Trigger: ${{ github.event_name }} (ref: $DELETED_BRANCH)"
           echo "Looking for Neon branch: $NEON_BRANCH"
           echo ""
 
-          # Never delete protected Neon branches
-          if [ "$NEON_BRANCH" = "main" ] || [ "$NEON_BRANCH" = "preview/dev" ]; then
+          # Never delete the protected dev preview branch. The Neon `main`
+          # branch is guarded below by the default/primary jq filter.
+          if [ "$NEON_BRANCH" = "preview/dev" ]; then
             echo "⏭️  '$NEON_BRANCH' is protected. Skipping."
             exit 0
           fi
@@ -79,6 +80,6 @@ jobs:
         run: |
           echo "## Neon Branch Auto-Cleanup" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Git branch \`$DELETED_BRANCH\` was deleted." >> "$GITHUB_STEP_SUMMARY"
+          echo "Trigger: \`${{ github.event_name }}\` (ref: \`$DELETED_BRANCH\`)." >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Attempted to delete matching Neon branch. Check logs for details." >> "$GITHUB_STEP_SUMMARY"
