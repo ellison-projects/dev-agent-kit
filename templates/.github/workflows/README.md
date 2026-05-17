@@ -13,7 +13,7 @@ Copy any workflow you want into `.github/workflows/` in the consumer repo and co
 | Workflow | Trigger | What it does | Needs |
 |---|---|---|---|
 | `cleanup-claude-branches.yml` | Manual (`workflow_dispatch`) | Deletes `claude/*` branches whose PRs have merged. Blocks if any PR is open. Dry-run by default. | `GITHUB_TOKEN` (default) |
-| `merge-main-into-dev.yml` | Push to `main` + manual | Fast-forwards `dev` with `main` after every release. Errors if `dev` doesn't exist. | `GITHUB_TOKEN` (default) |
+| `merge-main-into-dev.yml` | Push to `main` + manual | Merges `main` into `dev` after every release (creates a merge commit if `dev` has diverged). Errors if `dev` doesn't exist. | `GITHUB_TOKEN` (default) |
 | `neon-branch-delete.yml` | Git branch deleted + PR closed | Deletes the matching `preview/<branch>` Neon branch. Skips `main` and `preview/dev`. | `secrets.NEON_API_KEY`, `vars.NEON_PROJECT_ID` |
 | `cleanup-neon-branches.yml` | Manual | Bulk cleanup of Neon branches that aren't default/primary/`main`/`preview/dev`. Dry-run by default. | `secrets.NEON_API_KEY`, `vars.NEON_PROJECT_ID` |
 | `reset-dev-database.yml` | Manual | Resets the `preview/dev` Neon branch to its parent (typically `main`) so dev matches prod. | `secrets.NEON_API_KEY`, `vars.NEON_PROJECT_ID` |
