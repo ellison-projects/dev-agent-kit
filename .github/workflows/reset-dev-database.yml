@@ -5,6 +5,8 @@ on:
 
 jobs:
   reset-dev-db:
+    # DISABLED IN TEMPLATE: delete this `if: false` line to enable in your project.
+    if: false
     runs-on: ubuntu-latest
 
     steps:

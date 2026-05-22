@@ -7,8 +7,10 @@ on:
 
 jobs:
   cleanup:
-    # Run for branch deletions (not tags) or PR close events
-    if: github.event_name == 'pull_request' || github.event.ref_type == 'branch'
+    # DISABLED IN TEMPLATE: change `false` back to the original guard
+    # (`github.event_name == 'pull_request' || github.event.ref_type == 'branch'`)
+    # to enable in your project.
+    if: false
     runs-on: ubuntu-latest
 
     steps:
