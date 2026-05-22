@@ -27,13 +27,12 @@ Tell the agent. Where it goes next depends on what you decide together:
 
 ### Picking up from the backlog
 
-When you're ready to engage with a backlog item, remove the line from `backlog.md` and move into planning.
+When you're ready to engage with a backlog item, remove its line from `backlog.md` and move into planning.
 
 ### Planning
 
-- Branch: `feat/<feature>` (or whatever your branch convention is)
-- Run `/start <feature>` — creates `_workspace/active/<feature>/`
-- Write the plan inside. Shape it however the work needs: `summary.md` + `technical.md`, a single `plan.md`, scratch notes, sketches. No required structure.
+- Branch off main (whatever your branch convention is).
+- Create `_workspace/active/<feature>/` and write the plan inside. Shape it however the work needs: `summary.md` + `technical.md`, a single `plan.md`, scratch notes, sketches. No required structure.
 - If a research doc informed this, link to it from the plan.
 - Commit, open the plan PR, merge. The `active/<feature>/` folder stays put between sessions.
 
@@ -43,24 +42,17 @@ Usually a separate branch a day or two later, off main. The `active/<feature>/` 
 
 ### Shipping
 
-Before opening the impl PR, on the impl branch:
+Before opening the impl PR, on the impl branch, do three things in one commit:
 
-```
-/ship <feature>
-```
+1. Write or update `docs/systems/<feature>.md` with how the system actually works — promote the durable parts of the plan, drop the rest.
+2. `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/`
+3. Commit everything together — code, systems doc, archive move.
 
-What it does:
-
-- Stubs `docs/systems/<feature>.md` with section headers pulled from your plan + TODOs
-- You fill in the systems doc — this is the part that benefits from your hands
-- Moves `_workspace/active/<feature>/` to `_workspace/archived/<feature>/`
-- Stages everything
-
-You commit and open the PR. Code, systems doc, and archive move land in one merge.
+Open the PR. Code and docs reshuffle land in the same merge.
 
 ### Killing
 
-If you abandon a feature mid-flight: `/ship --kill <feature>` moves it to `archived/` with a one-line `STATUS.md` saying why. No systems doc.
+If you abandon a feature mid-flight: `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/` and drop a one-line `STATUS.md` inside saying why. No systems doc.
 
 Research that didn't lead anywhere stays in `docs/research/` as a record — "we considered this and decided not to act" is itself useful information.
 
@@ -70,10 +62,10 @@ Research that didn't lead anywhere stays in `docs/research/` as a record — "we
 |---|---|
 | New idea, want to explore options | Write `docs/research/<topic>.md` |
 | New idea, direction clear, not starting | Add a line to `_workspace/backlog.md` |
-| Starting work on something | `/start <feature>`, branch, write into `_workspace/active/<feature>/` |
+| Starting work on something | Branch, create `_workspace/active/<feature>/`, write the plan |
 | Coming back to a paused feature | Branch fresh off main; folder is already in `active/` |
-| Wrapping up an impl branch | `/ship <feature>` before opening the PR |
-| Killing an in-flight feature | `/ship --kill <feature>` |
+| Wrapping up an impl branch | Write `docs/systems/<feature>.md`, `git mv` active → archived, commit it all together |
+| Killing an in-flight feature | `git mv` active → archived, add `STATUS.md` |
 | Checking what's hot | `ls _workspace/active/` |
 | Looking up why we picked X over Y a year ago | `docs/research/` |
 
