@@ -26,7 +26,9 @@ Add structure as the work demands it. Don't pre-plan the doc shape.
 
 ## When something leaves this folder
 
-- **Shipped:** write `docs/systems/<feature>.md` capturing how it actually works, then `git mv active/<feature>/ archived/<feature>/`. All in one commit alongside the code.
+> **Same-PR rule:** if the current branch resolves a feature (ships or kills it), that same PR must move the folder to `archived/`. Don't defer the move to a follow-up — follow-ups never happen, and `active/` quietly fills with finished work.
+
+- **Shipped:** write `docs/systems/<feature>.md` capturing how it actually works, then `git mv active/<feature>/ archived/<feature>/`. All in one commit, in the same PR as the code.
 - **Killed:** `git mv active/<feature>/ archived/<feature>/` and add a one-line `STATUS.md` saying why. No systems doc.
 
 See [`../CLAUDE.md`](../CLAUDE.md) for the full flow.
