@@ -72,6 +72,6 @@ Research that didn't lead anywhere stays in `docs/research/` as a record — "we
 ## Why this shape
 
 - **`_workspace/` is work-in-flight only.** Every folder in it moves through stages: backlog → active → archived. Reference material (including research) lives in `docs/` so this folder stays a clean live signal.
-- **`active/` is the live signal.** Whatever's in there is what's in flight, full stop. If it grows past ~6 entries, you've over-started.
+- **`active/` is the live signal.** Whatever's in there is what's in flight, full stop.
 - **One backlog file, not a folder.** Most backlog items never become full plans. A single file keeps capture cheap.
 - **Per-feature archive folders.** History is easy to navigate per feature, not a flat dumping ground.
