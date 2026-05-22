@@ -56,7 +56,7 @@ Required env (set as Vercel project env vars):
 - `NEON_MAIN_BRANCH_ID` — Neon branch ID of your main branch (e.g. `br-xxxx-xxxxxxx`). Find this in the Neon console under Branches → click main → copy the branch ID.
 - `VERCEL_GIT_COMMIT_REF` — auto-set by Vercel; the git branch name being built
 
-Without these, the script skips the reset and just runs migrations.
+Outside of a preview environment (`VERCEL_ENV !== "preview"`), the script skips the reset and just runs migrations. Inside a preview, missing env vars are a hard error — `build-preview.js` is what gates calling this script on `NEON_API_KEY`/`NEON_PROJECT_ID` being set, so the "skip" behavior only applies via that orchestrator.
 
 ## migrate-build.js
 
