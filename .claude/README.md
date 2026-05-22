@@ -1,6 +1,6 @@
-# .claude bundle
+# .claude/
 
-Starting-point Claude Code config for a new repo. Mirror-only — copy this folder to `.claude/` in the consumer once and own it.
+Claude Code config for this project — settings, hooks, and starter skills. Edit freely.
 
 ## What's in here
 
@@ -35,7 +35,7 @@ See https://code.claude.com/docs/en/claude-code/settings for the full hook refer
 
 ## skills/
 
-Both skills are genericized from the lawncare-platform conventions:
+Two starter skills:
 
 - **`review-copilot-pr-comments`** — invoked when you ask Claude to "review PR comments" or "watch this PR". Triages each review comment into fix / defer / push-back, replies to all, then subscribes the session so future events keep waking it. Requires GitHub MCP access.
 - **`vercel-deployment`** — checks the latest Vercel deploy via the Vercel MCP, summarizes the state, and if it failed, pulls logs and applies a minimal fix. Resolves the project from `.vercel/project.json` or `$ARGUMENTS`; hardcode IDs in the skill body if your fresh-session environment doesn't have `.vercel/` committed.
