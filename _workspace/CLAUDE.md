@@ -42,13 +42,14 @@ Usually a separate branch a day or two later, off main. The `active/<feature>/` 
 
 ### Shipping
 
-Before opening the impl PR, on the impl branch, do three things in one commit:
+Before opening the impl PR, the same branch should include all of:
 
-1. Write or update `docs/systems/<feature>.md` with how the system actually works — promote the durable parts of the plan, drop the rest.
-2. `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/`
-3. Commit everything together — code, systems doc, archive move.
+1. Code for the feature, with unit tests covering it.
+2. `docs/systems/<feature>.md` — how the system actually works (promote the durable parts of the plan, drop the rest).
+3. Any other docs the change touches (patterns, features, API references).
+4. `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/`.
 
-Open the PR. Code and docs reshuffle land in the same merge.
+All four land in one PR. Don't defer the archive move to a follow-up — follow-ups don't happen.
 
 ### Killing
 
@@ -64,7 +65,7 @@ Research that didn't lead anywhere stays in `docs/research/` as a record — "we
 | New idea, direction clear, not starting | Add a line to `_workspace/backlog.md` |
 | Starting work on something | Branch, create `_workspace/active/<feature>/`, write the plan |
 | Coming back to a paused feature | Branch fresh off main; folder is already in `active/` |
-| Wrapping up an impl branch | Write `docs/systems/<feature>.md`, `git mv` active → archived, commit it all together |
+| Wrapping up an impl branch | Tests + `docs/systems/<feature>.md` + any other touched docs + `git mv` active → archived — all in one PR |
 | Killing an in-flight feature | `git mv` active → archived, add `STATUS.md` |
 | Checking what's hot | `ls _workspace/active/` |
 | Looking up why we picked X over Y a year ago | `docs/research/` |
