@@ -1,5 +1,5 @@
 ---
-globs:
+paths:
   - "**/*.test.{ts,tsx}"
 ---
 

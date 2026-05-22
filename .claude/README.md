@@ -7,6 +7,9 @@ Claude Code config for this project — settings, hooks, and starter skills. Edi
 ```
 .claude/
 ├── settings.json   # SessionStart hook loader, no-ops if scripts/setup.sh doesn't exist
+├── rules/
+│   ├── test-files.md   # Vitest conventions, auto-applied on **/*.test.{ts,tsx}
+│   └── e2e-gotchas.md  # Puppeteer/E2E gotchas, auto-applied on tests/e2e/**
 └── skills/
     ├── review-copilot-pr-comments/SKILL.md  # walk PR comments, fix/reply/subscribe
     └── vercel-deployment/SKILL.md           # check latest deploy, fix on failure
@@ -32,6 +35,17 @@ Add your own hooks as needed. Common patterns:
 - **PreToolUse** — gate destructive shell commands with a confirmation prompt.
 
 See https://code.claude.com/docs/en/claude-code/settings for the full hook reference.
+
+## rules/
+
+Markdown files Claude Code auto-loads. Files without `paths:` frontmatter load on every session (same priority as `CLAUDE.md`); files with `paths:` only load when Claude reads matching files. One topic per file, descriptive filename.
+
+The two starters:
+
+- **`test-files.md`** — Vitest conventions (mobile-friendly `it.each` format, file naming, mocking patterns). Scoped to `**/*.test.{ts,tsx}`.
+- **`e2e-gotchas.md`** — Puppeteer + Vitest E2E pitfalls (selector stability, async waits, env teardown). Scoped to `tests/e2e/**` and `vitest.e2e.config.ts`.
+
+See https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/ for the full rules reference.
 
 ## skills/
 

@@ -6,7 +6,7 @@ Conventions for this project — how it's structured, what stack it assumes, how
 
 Three top-level folders for project material — know which is which:
 
-- **[`docs/`](./docs/)** — state of the world **today**. If reality changes, update these docs in the same commit. Subfolders: `patterns/` (code conventions), `systems/` (living "how it works today" docs for shipped features), `features/` (per-feature state-of-world references).
+- **[`docs/`](./docs/)** — state of the world **today**. If reality changes, update these docs in the same commit. Subfolder breakdown lives in [`docs/CLAUDE.md`](./docs/CLAUDE.md).
 - **[`_workspace/`](./_workspace/)** — work in flight, organized by state. The underscore is the signal. Contains: `backlog.md` (ideas), `active/<feature>/` (currently planning or implementing — each has a required `brief.md`), `archived/<feature>/` (shipped or killed).
 - **[`_research/`](./_research/)** — exploratory thinking, kept as long-lived reference. Options explored, decisions made or deferred. Doesn't move — research stays put even after the work is shipped or abandoned.
 
@@ -24,13 +24,13 @@ The stack this template assumes. Default unless there's a specific reason to dev
 | Database | **Postgres on Neon** | Branchable DB per preview env; idle-suspend keeps cost near zero on side projects that don't get daily traffic. |
 | Migrations | **`node-pg-migrate`** | Plain SQL files, raw control over the schema. Tried Prisma — the schema-as-config indirection cost more than the type-safety gave back. |
 | Framework | **Next.js (App Router) + React + TypeScript** | Server Components + Server Actions remove most endpoint boilerplate. |
-| Testing | **Vitest** (unit + integration), **Puppeteer** (E2E) | Fast, Jest-shaped, plays nice with Vite-flavored toolchains. See [`docs/patterns/test-files.md`](./docs/patterns/test-files.md) and [`docs/patterns/e2e-gotchas.md`](./docs/patterns/e2e-gotchas.md) for the conventions. |
+| Testing | **Vitest** (unit + integration), **Puppeteer** (E2E) | Fast, Jest-shaped, plays nice with Vite-flavored toolchains. Conventions live in [`.claude/rules/test-files.md`](./.claude/rules/test-files.md) and [`.claude/rules/e2e-gotchas.md`](./.claude/rules/e2e-gotchas.md) — auto-applied when Claude works with matching files. |
 | Email | **Resend** | Clean transactional API, sender verification was painless. Always behind a `src/lib/email.ts` wrapper — no direct SDK calls from feature code. |
 | Auth | **NextAuth v5** (`next-auth`) | Built for App Router, supports credential + OAuth flows without depending on a third-party service. |
 | File storage | **AWS S3** (`@aws-sdk/client-s3`) | Ubiquitous, cheap, presigned URLs for direct browser upload. |
 | AI | **Anthropic Claude** (`@anthropic-ai/sdk`) | Default LLM. Reach for OpenAI only when a specific capability requires it. Every call routed through a logging helper so usage + cost is tracked. |
 
-When `docs/patterns/` enforces something about one of these (testing conventions, etc.), the pattern is the source of truth and this row is just the pointer.
+When a `docs/patterns/*.md` doc or `.claude/rules/*.md` rule enforces something about one of these (testing conventions, etc.), that file is the source of truth and this row is just the pointer.
 
 ## Git workflow
 

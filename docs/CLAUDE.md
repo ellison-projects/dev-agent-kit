@@ -9,7 +9,7 @@ This is reference material *about the current state*, not process or exploration
 
 ## Subfolders
 
-- [`patterns/`](./patterns/) — code conventions you want enforced everywhere.
+- [`patterns/`](./patterns/) — human-facing code conventions and reference. For Claude-auto-applied rules (test conventions, etc.), see [`../.claude/rules/`](../.claude/rules/) instead. *(created on demand)*
 - [`systems/`](./systems/) — living "how it works today" docs for shipped systems. *(created on demand)*
 - [`features/`](./features/) — per-feature state-of-world references that don't fit `systems/`. *(created on demand)*
 - [`operations/`](./operations/) — runbooks, incident playbooks, deploy and rollback procedures.
