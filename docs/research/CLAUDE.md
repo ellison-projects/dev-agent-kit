@@ -1,6 +1,10 @@
 # docs/research/
 
-Long-lived reference for option exploration and decisions. One file per topic (promote to `<topic>/` folder if it grows).
+Long-lived reference for **exploratory** research — questions explored, options compared, directions picked or rejected.
+
+**Read this folder for *thinking*, not for *state*.** A research doc says "we considered X" — it does **not** tell you whether X is currently active in the platform, was built, was abandoned, or was deferred. Presence of a research doc means somebody thought about something, nothing more. For what's actually shipped and running today, see [`../systems/`](../systems/). For what's in flight right now, see [`../../_workspace/active/`](../../_workspace/active/).
+
+One file per topic (promote to `<topic>/` folder if it grows).
 
 Each research doc should:
 
