@@ -2,11 +2,15 @@
 # SessionStart hook — prepares Claude Code on the web sessions so `npm test`
 # (and the rest of the dev loop) works out of the box.
 #
-# Three things this script guarantees:
+# Three things this script tries to ensure (best-effort; failures of
+# steps 1 and 2 are intentionally swallowed so the session still starts):
 #   1. PostgreSQL is running on localhost:5432.
 #   2. The `postgres` superuser has password `postgres` (matches the default
 #      DATABASE_URL most test setups assume).
 #   3. node_modules is installed and up to date with package.json.
+#
+# If steps 1 or 2 fail silently, you'll see the symptom later (tests can't
+# connect). Run the commands manually to see the underlying error.
 #
 # Local sessions short-circuit out — devs already have their environment
 # configured the way they want it. The guard is `CLAUDE_CODE_REMOTE=true`,
