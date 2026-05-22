@@ -30,7 +30,3 @@ Add structure as the work demands it. Don't pre-plan the doc shape.
 - **Killed:** `git mv active/<feature>/ archived/<feature>/` and add a one-line `STATUS.md` saying why. No systems doc.
 
 See [`../CLAUDE.md`](../CLAUDE.md) for the full flow.
-
-## Health check
-
-If `ls active/` shows more than ~6 entries, you've over-started. Close some out (ship or kill) before opening more.
