@@ -28,10 +28,10 @@ Full rationale in [`CLAUDE.md`](./CLAUDE.md) under "Preferred stack." The `.gith
 ## What's in here
 
 - **[`CLAUDE.md`](./CLAUDE.md)** — top-level project guide (structure, stack, workflow, Claude Code conventions).
-- **[`docs/`](./docs/)** — state-of-the-world reference. Subfolders: `patterns/` (code conventions, including pre-loaded testing rules), `systems/` (created on demand), `features/` (created on demand).
+- **[`docs/`](./docs/)** — state-of-the-world reference. Subfolders: `patterns/` (human-facing code conventions), `operations/` (runbooks), `decisions/` (ADRs), `integrations/` (third-party setup), `data/` (schema), plus `systems/` and `features/` created on demand. See [`docs/CLAUDE.md`](./docs/CLAUDE.md) for the full breakdown.
 - **[`_workspace/`](./_workspace/)** — work in flight: `backlog.md`, `active/<feature>/`, `archived/<feature>/`.
 - **[`_research/`](./_research/)** — exploratory thinking, long-lived reference.
-- **[`.claude/`](./.claude/)** — Claude Code settings, starter skills (`vercel-deployment`, `review-copilot-pr-comments`), `SessionStart` hook that runs `scripts/setup.sh` if present.
+- **[`.claude/`](./.claude/)** — Claude Code settings, starter skills (`vercel-deployment`, `review-copilot-pr-comments`), starter rules (`test-files.md`, `e2e-gotchas.md` — auto-applied via `paths:` frontmatter), and a `SessionStart` hook that runs `scripts/setup.sh` if present.
 - **[`.github/workflows/`](./.github/workflows/)** — starter GitHub Actions for Claude branch cleanup, Neon branch lifecycle, dev DB reset, and dev↔main merging.
 
 ## After cloning
