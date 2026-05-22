@@ -37,10 +37,29 @@ async function findNeonBranchByName(neonApiKey, neonProjectId, gitBranchName) {
 
   console.log(`   Found ${branches.length} branches in Neon project`);
 
-  // Try exact match first.
-  let matchedBranch = branches.find((b) => b.name === gitBranchName);
+  // The kit's workflows name preview branches `preview/<git-branch>`
+  // (see .github/workflows/neon-branch-delete.yml), so try that first
+  // — exact, then normalized (`/` → `-`).
+  const prefixedName = `preview/${gitBranchName}`;
+  let matchedBranch = branches.find((b) => b.name === prefixedName);
+  if (matchedBranch) {
+    console.log(`   Found branch with preview/ prefix: ${matchedBranch.name}`);
+  }
 
-  // Then try normalized (replace / with -).
+  if (!matchedBranch) {
+    const normalizedPrefixedName = prefixedName.replace(/\//g, '-');
+    matchedBranch = branches.find((b) => b.name === normalizedPrefixedName);
+    if (matchedBranch) {
+      console.log(`   Found branch with normalized preview/ prefix: ${matchedBranch.name}`);
+    }
+  }
+
+  // Fall back to the raw branch name (and normalized form) for projects
+  // that don't use the `preview/` convention.
+  if (!matchedBranch) {
+    matchedBranch = branches.find((b) => b.name === gitBranchName);
+  }
+
   if (!matchedBranch) {
     const normalizedName = gitBranchName.replace(/\//g, '-');
     matchedBranch = branches.find((b) => b.name === normalizedName);
