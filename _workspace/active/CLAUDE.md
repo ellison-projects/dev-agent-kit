@@ -5,8 +5,8 @@ One folder per feature currently in flight. Whatever's here is what's actively b
 ```
 _workspace/active/
   <feature-name>/        # e.g., audit-log/, faster-onboarding/
-    plan.md              # or summary.md + technical.md, or notes.md — whatever shape fits
-    ...                  # scratch notes, sketches, decision logs, etc.
+    brief.md             # required — see "What goes inside"
+    ...                  # optional: plan.md, technical.md, notes, sketches
 ```
 
 ## Naming
@@ -15,14 +15,33 @@ Folder name is the feature slug — lowercase, kebab-case, short. Match the bran
 
 ## What goes inside
 
-No required structure. Some shapes that work:
+**Required:** every `active/<feature>/` folder has a `brief.md` — the canonical "where am I?" anchor. Template:
 
-- **`plan.md` only** — small feature, one document covers it.
-- **`summary.md` + `technical.md`** — split when "what + why" and "how" need to live separately.
-- **`notes.md` + scratch files** — exploratory work where the plan emerges as you go.
+```markdown
+# <feature-name>
+
+**Status:** Planning | Building | Paused | Blocked
+
+## Problem
+<one or two sentences — what we're solving, not how>
+
+## TODO
+- [ ] step 1
+- [ ] step 2
+- [ ] ...
+```
+
+- Status vocabulary above is a suggestion, not an enum — free-form is fine.
+- TODO is for high-level steps (3–6 items). Deeper-level tasks should be managed outside this process.
+
+**Optional**, add as the work demands:
+
+- `plan.md` — single-doc plan for medium features.
+- `summary.md` + `technical.md` — split when "what + why" and "how" need to live separately.
+- `notes.md` + scratch files — exploratory work where the plan emerges as you go.
 - Link out to a `docs/research/<topic>.md` if a research doc informed this.
 
-Add structure as the work demands it. Don't pre-plan the doc shape.
+Don't pre-plan the doc shape. Brief is required; the rest grows with the work.
 
 ## When something leaves this folder
 

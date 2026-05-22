@@ -32,8 +32,8 @@ When you're ready to engage with a backlog item, remove its line from `backlog.m
 ### Planning
 
 - Branch off main (whatever your branch convention is).
-- Create `_workspace/active/<feature>/` and write the plan inside. Shape it however the work needs: `summary.md` + `technical.md`, a single `plan.md`, scratch notes, sketches. No required structure.
-- If a research doc informed this, link to it from the plan.
+- Create `_workspace/active/<feature>/` with a `brief.md` (status, problem, high-level TODO — see [`active/CLAUDE.md`](./active/CLAUDE.md) for the template). Add a `plan.md`, `summary.md` + `technical.md`, or scratch notes alongside as the work demands.
+- If a research doc informed this, link to it from the brief.
 - Commit, open the plan PR, merge. The `active/<feature>/` folder stays put between sessions.
 
 ### Implementing
