@@ -31,14 +31,14 @@ When you're ready to engage with a backlog item, remove its line from `backlog.m
 
 ### Planning
 
-- Branch off main (whatever your branch convention is).
+- Branch off your integration branch (`dev` per the root [`CLAUDE.md`](../CLAUDE.md)).
 - Create `_workspace/active/<feature>/` with a `brief.md` (status, problem, high-level TODO — see [`active/CLAUDE.md`](./active/CLAUDE.md) for the template). Add a `plan.md`, `summary.md` + `technical.md`, or scratch notes alongside as the work demands.
 - If a research doc informed this, link to it from the brief.
 - Commit, open the plan PR, merge. The `active/<feature>/` folder stays put between sessions.
 
 ### Implementing
 
-Usually a separate branch a day or two later, off main. The `active/<feature>/` folder is still there from the plan branch — keep going. Build the feature.
+Usually a separate branch a day or two later, off the same integration branch (`dev`). The `active/<feature>/` folder is still there from the plan branch — keep going. Build the feature.
 
 ### Shipping
 
@@ -64,7 +64,7 @@ Research that didn't lead anywhere stays in `_research/` as a record — "we con
 | New idea, want to explore options | Write `_research/<topic>.md` |
 | New idea, direction clear, not starting | Add a line to `_workspace/backlog.md` |
 | Starting work on something | Branch, create `_workspace/active/<feature>/`, write the plan |
-| Coming back to a paused feature | Branch fresh off main; folder is already in `active/` |
+| Coming back to a paused feature | Branch fresh off `dev`; folder is already in `active/` |
 | Wrapping up an impl branch | Tests + `docs/systems/<feature>.md` + any other touched docs + `git mv` active → archived — all in one PR |
 | Killing an in-flight feature | `git mv` active → archived, add `STATUS.md` |
 | Checking what's hot | `ls _workspace/active/` |
