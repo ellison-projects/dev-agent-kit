@@ -31,7 +31,8 @@ Full rationale in [`CLAUDE.md`](./CLAUDE.md) under "Preferred stack." The `.gith
 - **[`docs/`](./docs/)** — state-of-the-world reference. Subfolders: `patterns/` (human-facing code conventions), `operations/` (runbooks), `decisions/` (ADRs), `integrations/` (third-party setup), `data/` (schema), plus `systems/` and `features/` created on demand. See [`docs/CLAUDE.md`](./docs/CLAUDE.md) for the full breakdown.
 - **[`_workspace/`](./_workspace/)** — work in flight: `backlog.md`, `active/<feature>/`, `archived/<feature>/`.
 - **[`_research/`](./_research/)** — exploratory thinking, long-lived reference.
-- **[`.claude/`](./.claude/)** — Claude Code settings, starter skills (`vercel-deployment`, `review-copilot-pr-comments`), starter rules (`test-files.md`, `e2e-gotchas.md` — auto-applied via `paths:` frontmatter), and a `SessionStart` hook that runs `scripts/setup.sh` if present.
+- **[`.claude/`](./.claude/)** — Claude Code settings, starter skills (`vercel-deployment`, `review-copilot-pr-comments`), starter rules (`test-files.md`, `e2e-gotchas.md` — auto-applied via `paths:` frontmatter), and a `SessionStart` hook (`.claude/hooks/session-start.sh`) that bootstraps Postgres + `npm install` on Claude Code web sessions.
+- **[`scripts/`](./scripts/)** — Vercel build pipeline (`build-preview.js`, `generate-build-info.js`, `migrate-build.js`, `reset-preview-branch.js`) and a local `reset-database.js` helper. Wired up via the `build` and `db:reset` npm scripts (see [`scripts/README.md`](./scripts/README.md)).
 - **[`.github/workflows/`](./.github/workflows/)** — starter GitHub Actions for Claude branch cleanup, Neon branch lifecycle, dev DB reset, and dev↔main merging.
 
 ## After cloning

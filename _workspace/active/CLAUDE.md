@@ -51,9 +51,9 @@ Don't pre-plan the doc shape. Brief is required; the rest grows with the work.
   - Code for the feature, with **unit tests** covering it.
   - `docs/systems/<feature>.md` capturing how it actually works.
   - Any other docs the change touches (patterns, features, API references).
-  - `git mv active/<feature>/ archived/<feature>/`.
+  - `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/`.
 
   All in one PR.
-- **Killed:** `git mv active/<feature>/ archived/<feature>/` and add a one-line `STATUS.md` saying why. No systems doc.
+- **Killed:** `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/` and add a one-line `STATUS.md` saying why. No systems doc.
 
 See [`../CLAUDE.md`](../CLAUDE.md) for the full flow.

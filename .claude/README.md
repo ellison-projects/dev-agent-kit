@@ -6,10 +6,12 @@ Claude Code config for this project — settings, hooks, and starter skills. Edi
 
 ```
 .claude/
-├── settings.json   # SessionStart hook loader, no-ops if scripts/setup.sh doesn't exist
+├── settings.json           # acceptEdits + SessionStart hook loader
+├── hooks/
+│   └── session-start.sh    # remote-only Postgres + npm install bootstrap
 ├── rules/
-│   ├── test-files.md   # Vitest conventions, auto-applied on **/*.test.{ts,tsx}
-│   └── e2e-gotchas.md  # Puppeteer/E2E gotchas, auto-applied on tests/e2e/**
+│   ├── test-files.md       # Vitest conventions, auto-applied on **/*.test.{ts,tsx}
+│   └── e2e-gotchas.md      # Puppeteer/E2E gotchas, auto-applied on tests/e2e/**
 └── skills/
     ├── review-copilot-pr-comments/SKILL.md  # walk PR comments, fix/reply/subscribe
     └── vercel-deployment/SKILL.md           # check latest deploy, fix on failure
@@ -17,7 +19,20 @@ Claude Code config for this project — settings, hooks, and starter skills. Edi
 
 ## settings.json
 
-Ships with one hook: `SessionStart` runs `scripts/setup.sh` if it exists. The `test -f … || true` wrapper means the hook is a no-op for repos that haven't created the setup script yet — safe to copy and forget. Use the script to load `.env.build`-style stub vars for agent sessions or to install missing CLIs.
+Two notable bits of config:
+
+- `permissions.defaultMode: "acceptEdits"` — agents can edit files without prompting. Reverse this in `settings.local.json` if you want stricter local behavior.
+- `SessionStart` runs `.claude/hooks/session-start.sh` if present and executable. The `test -x … || true` wrapper keeps it safely a no-op if you delete the hook.
+
+## hooks/session-start.sh
+
+Guarded on `CLAUDE_CODE_REMOTE=true` (set by the Claude Code web runner), so local sessions are untouched. On remote sessions it:
+
+1. Starts PostgreSQL if it's not running.
+2. Sets the `postgres` superuser password to `postgres` so tests can connect over TCP with scram-sha-256.
+3. Runs `npm install` if `node_modules` is missing or older than `package.json`.
+
+If your project doesn't use Postgres or has its own bootstrap, edit the script — it's just shell.
 
 Add your own hooks as needed. Common patterns:
 
@@ -27,7 +42,7 @@ Add your own hooks as needed. Common patterns:
     "matcher": "Edit|Write|MultiEdit",
     "hooks": [{
       "type": "command",
-      "command": "case \"$CLAUDE_TOOL_INPUT_file_path\" in *migrations/*) npx vitest run tests/integration/db-smoke.test.ts ;; esac"
+      "command": "if echo \"${CLAUDE_FILE_PATHS:-}\" | grep -qE 'migrations/.*\\.sql$'; then npx vitest run --reporter=dot tests/integration/db-smoke.test.ts; fi"
     }]
   }
   ```

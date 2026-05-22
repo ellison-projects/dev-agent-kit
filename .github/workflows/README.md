@@ -8,6 +8,8 @@ Reusable GitHub Actions workflows for repos that follow these conventions:
 
 Copy any workflow you want into `.github/workflows/` in the consumer repo and configure the secrets/vars listed below. Each file is a starting point — once copied, the consumer owns it.
 
+> **Disabled by default in this template.** Each workflow has `if: false` on its job so it won't run in the template repo or in fresh forks. To enable in your project, delete the `if: false` line from the job. The `neon-branch-delete.yml` workflow has a different original guard — see the comment in that file before removing.
+
 ## Files
 
 | Workflow | Trigger | What it does | Needs |
