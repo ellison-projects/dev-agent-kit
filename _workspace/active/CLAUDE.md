@@ -39,7 +39,7 @@ Folder name is the feature slug — lowercase, kebab-case, short. Match the bran
 - `plan.md` — single-doc plan for medium features.
 - `summary.md` + `technical.md` — split when "what + why" and "how" need to live separately.
 - `notes.md` + scratch files — exploratory work where the plan emerges as you go.
-- Link out to a `docs/research/<topic>.md` if a research doc informed this.
+- Link out to a `_research/<topic>.md` if a research doc informed this.
 
 Don't pre-plan the doc shape. Brief is required; the rest grows with the work.
 

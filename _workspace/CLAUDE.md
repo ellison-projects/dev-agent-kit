@@ -13,13 +13,13 @@ _workspace/
 
 Three states, one direction: backlog → active → archived. Every folder in here moves through stages.
 
-Research lives elsewhere: [`docs/research/`](../docs/research/). It's reference, not work-in-flight, so it doesn't belong here.
+Research lives elsewhere: [`_research/`](../_research/). It's reference, not work-in-flight, so it doesn't belong here.
 
 ## Starting point: "I have an idea"
 
 Tell the agent. Where it goes next depends on what you decide together:
 
-- **Need to weigh options?** → write to [`docs/research/<topic>.md`](../docs/research/). State the question, list options, compare honestly, end with a recommendation (or "still open"). The doc stays there as reference — it doesn't move with the feature.
+- **Need to weigh options?** → write to [`_research/<topic>.md`](../_research/). State the question, list options, compare honestly, end with a recommendation (or "still open"). The doc stays there as reference — it doesn't move with the feature.
 - **Direction is clear but not starting today?** → add a line to `backlog.md`. Link to a research doc if there was one.
 - **Starting right now?** → skip to "Planning" below.
 
@@ -55,20 +55,20 @@ All four land in one PR. Don't defer the archive move to a follow-up — follow-
 
 If you abandon a feature mid-flight: `git mv _workspace/active/<feature>/ _workspace/archived/<feature>/` and drop a one-line `STATUS.md` inside saying why. No systems doc.
 
-Research that didn't lead anywhere stays in `docs/research/` as a record — "we considered this and decided not to act" is itself useful information.
+Research that didn't lead anywhere stays in `_research/` as a record — "we considered this and decided not to act" is itself useful information.
 
 ## Quick reference
 
 | What just happened | What to do |
 |---|---|
-| New idea, want to explore options | Write `docs/research/<topic>.md` |
+| New idea, want to explore options | Write `_research/<topic>.md` |
 | New idea, direction clear, not starting | Add a line to `_workspace/backlog.md` |
 | Starting work on something | Branch, create `_workspace/active/<feature>/`, write the plan |
 | Coming back to a paused feature | Branch fresh off main; folder is already in `active/` |
 | Wrapping up an impl branch | Tests + `docs/systems/<feature>.md` + any other touched docs + `git mv` active → archived — all in one PR |
 | Killing an in-flight feature | `git mv` active → archived, add `STATUS.md` |
 | Checking what's hot | `ls _workspace/active/` |
-| Looking up why we picked X over Y a year ago | `docs/research/` |
+| Looking up why we picked X over Y a year ago | `_research/` |
 
 ## Why this shape
 
