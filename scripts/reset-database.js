@@ -151,8 +151,9 @@ async function resetDatabase() {
       console.log(`Found ${indexes.length} indexes: ${indexes.join(', ')}`);
 
       for (const index of indexes) {
+        const quoted = `"${index.replace(/"/g, '""')}"`;
         runCommand(
-          `psql "${DATABASE_URL}" -c "DROP INDEX IF EXISTS ${index} CASCADE;"`,
+          `psql "${DATABASE_URL}" -c 'DROP INDEX IF EXISTS ${quoted} CASCADE;'`,
           `Dropping index ${index}`,
         );
       }
@@ -164,11 +165,11 @@ async function resetDatabase() {
   // Step 1b: Drop all detected tables
   if (tables.length > 0) {
     const dropTablesSQL = tables
-      .map((table) => `DROP TABLE IF EXISTS ${table} CASCADE;`)
+      .map((table) => `DROP TABLE IF EXISTS "${table.replace(/"/g, '""')}" CASCADE;`)
       .join('\n');
 
     runCommand(
-      `psql "${DATABASE_URL}" -c "${dropTablesSQL}"`,
+      `psql "${DATABASE_URL}" -c '${dropTablesSQL}'`,
       `Dropping ${tables.length} tables`,
     );
   }
@@ -193,7 +194,7 @@ async function resetDatabase() {
     if (fs.existsSync(seedEndpointPath)) {
       try {
         runCommand(
-          'curl -X POST http://localhost:3000/api/seed',
+          'curl -fsS -X POST http://localhost:3000/api/seed',
           'Seeding database',
           true,
         );
