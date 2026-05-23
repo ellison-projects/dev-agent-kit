@@ -1,11 +1,26 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "acceptEdits"
+  },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "test -f \"$CLAUDE_PROJECT_DIR/scripts/setup.sh\" && bash \"$CLAUDE_PROJECT_DIR/scripts/setup.sh\" || true"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"${CLAUDE_FILE_PATHS:-}\" | grep -qE 'migrations/.*\\.sql$'; then set -o pipefail && cd \"$CLAUDE_PROJECT_DIR\" && npm test --silent 2>&1 | tail -30; fi"
           }
         ]
       }
